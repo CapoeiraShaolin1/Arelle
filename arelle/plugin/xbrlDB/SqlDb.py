@@ -713,7 +713,7 @@ WITH row_values (%(newCols)s) AS (
                                 {"inputTable": _inputTableName,
                                  "table": _table,
                                  "newCols": ', '.join(newCols),
-                                 "match": ' AND '.join('{0}.{2} = {1}.{2}'.format(_table,_inputTableName,col) 
+                                 "match": ' AND '.join('({0}.{2} = {1}.{2} OR ({0}.{2} IS NULL AND {1}.{2} IS NULL))'.format(_table,_inputTableName,col) 
                                             for col in matchCols),
                                  "statusIfExisting": ", FALSE" if returnExistenceStatus else "",
                                  "returningCols": ', '.join('{0}.{1}'.format(_table,col)
