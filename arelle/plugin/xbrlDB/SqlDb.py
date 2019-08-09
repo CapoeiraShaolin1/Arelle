@@ -223,7 +223,7 @@ class SqlDbConnection():
         return str
         
     def pyBoolFromDbBool(self, str):
-        return str in ("TRUE", "t", True)  # may be DB string or Python boolean (preconverted)
+        return str in ("TRUE", "t", True, "1", 1)  # may be DB string or Python boolean (preconverted)
     
     def pyNoneFromDbNULL(self, str):
         return None
@@ -540,7 +540,7 @@ class SqlDbConnection():
                                                else '',
                                               int if typename in ("integer", "smallint", "int", "bigint", "number") else
                                               float if typename in ("double precision", "real", "numeric") else
-                                              self.pyBoolFromDbBool if typename in ("bit", "boolean") else
+                                              self.pyBoolFromDbBool if typename in ("bit", "boolean", "tinyint") else
                                               dateTime if typename in ("date","timestamp") else  # ModelValue.datetime !!! not python class
                                               str))
                                              for name, fulltype, colDecl in colTypes
