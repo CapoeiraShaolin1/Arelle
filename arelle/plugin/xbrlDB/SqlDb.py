@@ -699,7 +699,7 @@ WITH row_values (%(newCols)s) AS (
                  "statusIfExisting": ", TRUE" if returnExistenceStatus else ""
                  }, None, True)]
         elif self.product == "mysql":
-            sql = [("CREATE TEMPORARY TABLE %(inputTable)s ( %(inputCols)s );" %
+            sql = [("CREATE TEMPORARY TABLE %(inputTable)s ( %(inputCols)s %(temptableIdx)s  );" %
                         {"inputTable": _inputTableName,
                          "inputCols": ', '.join('{0} {1}'.format(newCol, colDeclarations[newCol])
                                                 for newCol in newCols),
