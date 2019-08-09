@@ -554,6 +554,26 @@ class SqlDbConnection():
     def getTable(self, table, idCol, newCols=None, matchCols=None, data=None, commit=False, 
                  comparisonOperator='=', checkIfExisting=False, insertIfNotMatched=True, 
                  returnMatches=True, returnExistenceStatus=False):
+        
+        def tempIndex(matchCols):
+            pat = re.compile(r"\d+")
+            indexCols = None
+            indexCol = []
+            if matchCols is not None:
+
+                for matchCol in matchCols:
+                    colType = colDeclarations[matchCol]
+                    if 'varchar' in colType:
+                        w = int(pat.findall(colType)[0])
+                        matchCol = matchCol+'({})'.format(w if w<=128 else 128) # take first 128 bytes to be included into index, due to limitation of size of index and performance
+                    elif 'text' in colType:
+                        matchCol = matchCol+'(192)'
+                    indexCol.append(matchCol)
+
+                indexCols = ', '.join(indexCol)
+                indexCols = ' ,INDEX ({})'.format(indexCols)
+            return indexCols 
+        
         # generate SQL
         # note: comparison by = will never match NULL fields
         # use 'IS NOT DISTINCT FROM' to match nulls, but this is not indexed and verrrrry slooooow
@@ -645,6 +665,7 @@ class SqlDbConnection():
         
         _table = self.dbTableName(table)
         _inputTableName = self.tempInputTableName
+        _temptableIdx   = tempIndex(matchCols)
         if self.product == "postgres":
             # insert new rows, return id and cols of new and existing rows
             # use IS NOT DISTINCT FROM instead of = to compare NULL usefully
@@ -681,7 +702,9 @@ WITH row_values (%(newCols)s) AS (
             sql = [("CREATE TEMPORARY TABLE %(inputTable)s ( %(inputCols)s );" %
                         {"inputTable": _inputTableName,
                          "inputCols": ', '.join('{0} {1}'.format(newCol, colDeclarations[newCol])
-                                                for newCol in newCols)}, None, False),
+                                                for newCol in newCols),
+                         "temptableIdx":  _temptableIdx
+                        }, None, False),
                    ("INSERT INTO %(inputTable)s ( %(newCols)s ) VALUES %(values)s;" %     
                         {"inputTable": _inputTableName,
                          "newCols": ', '.join(newCols),
